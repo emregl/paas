@@ -4,7 +4,5 @@
 
  - [x] Run the tool with the command `./python paas_linux.py`
 
- - For now, only the labs under the authentication and directory
-   traversal menu are working. 
-  - I will continue to develop the tool. More
-   labs will be added in the future.
+ - For now, PAAS only available for three categories: Authentication, Directory Traversal and OS Command Injection
+ - I will continue to develop the tool. More labs will be added in the future.
